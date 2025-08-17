@@ -1,0 +1,29 @@
+name: Codespace Re-Activation
+
+on:
+  schedule:
+    - cron: "*/20  * * * *"
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm install axios nodemailer
+
+      - name: Run validation script
+        run: node reactivate.js
+        env:
+          GH_CODESPACE_URL: ${{ secrets.GH_CODESPACE_URL }}
+          GH_COOKIE: ${{ secrets.GH_COOKIE }}
+          EMAIL_USER: ${{ secrets.EMAIL_USER }}
+          EMAIL_PASS: ${{ secrets.EMAIL_PASS }}
