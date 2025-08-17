@@ -37,33 +37,33 @@ x-shared: &shared
   depends_on:
     redis:
       condition: service_healthy
-    # postgres:
-    #   condition: service_healthy
-    # pgvector:
-    #   condition: service_healthy
+    postgres:
+      condition: service_healthy
+    pgvector:
+      condition: service_healthy
     # qdrant:
     #   condition: service_started
 
 services:
-  # postgres:
-  #   image: postgres:16
-  #   restart: always
-  #   environment:
-  #     - POSTGRES_USER
-  #     - POSTGRES_PASSWORD
-  #     - POSTGRES_DB
-  #     - POSTGRES_NON_ROOT_USER
-  #     - POSTGRES_NON_ROOT_PASSWORD
-  #   ports:
-  #     - 5432:5432
-  #   volumes:
-  #     - db_storage:/var/lib/postgresql/data
-  #     - ./init-data.sh:/docker-entrypoint-initdb.d/init-data.sh
-  #   healthcheck:
-  #     test: ['CMD-SHELL', 'pg_isready -h localhost -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
-  #     interval: 5s
-  #     timeout: 5s
-  #     retries: 10
+  postgres:
+    image: postgres:16
+    restart: always
+    environment:
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+      - POSTGRES_DB
+      - POSTGRES_NON_ROOT_USER
+      - POSTGRES_NON_ROOT_PASSWORD
+    ports:
+      - 5432:5432
+    volumes:
+      - db_storage:/var/lib/postgresql/data
+      - ./init-data.sh:/docker-entrypoint-initdb.d/init-data.sh
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -h localhost -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   redis:
     image: redis:6-alpine
@@ -76,22 +76,22 @@ services:
       timeout: 5s
       retries: 10
   
-  # pgvector:
-  #   image: ankane/pgvector
-  #   restart: always
-  #   environment:
-  #     - POSTGRES_USER
-  #     - POSTGRES_PASSWORD
-  #     - POSTGRES_DB=openaivector
-  #   ports:
-  #     - "5433:5432"
-  #   volumes:
-  #     - pgvector-storage:/var/lib/postgresql/data
-  #   healthcheck:
-  #     test: ['CMD-SHELL', 'pg_isready -h localhost -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
-  #     interval: 5s
-  #     timeout: 5s
-  #     retries: 10
+  pgvector:
+    image: ankane/pgvector
+    restart: always
+    environment:
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+      - POSTGRES_DB=openaivector
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgvector-storage:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -h localhost -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
+      interval: 5s
+      timeout: 5s
+      retries: 10
   # qdrant:
   #   image: qdrant/qdrant
   #   container_name: qdrant
