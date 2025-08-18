@@ -16,7 +16,7 @@ async function checkCodespace() {
 
     const body = res.data;
 
-    const hasCodespace = new RegExp(repoName);
+    const hasCodespace = /n8n \[Codespaces: orange-couscous\]/;
     const hasVSCode = /vscode/;
 
     if (hasCodespace.test(body) && hasVSCode.test(body)) {
