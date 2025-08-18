@@ -1,21 +1,22 @@
 version: '3.8'
 
 volumes:
-  db_storage:
+  # db_storage:
   n8n_storage:
   redis_storage:
-  pgvector-storage:
+  # pgvector-storage:
 
 x-shared: &shared
   restart: always
   image: docker.n8n.io/n8nio/n8n
   environment:
     - DB_TYPE=postgresdb
-    - DB_POSTGRESDB_HOST=postgres
+    - DB_POSTGRESDB_HOST=cloudflared-client
     - DB_POSTGRESDB_PORT=5432
     - DB_POSTGRESDB_DATABASE=${POSTGRES_DB}
     - DB_POSTGRESDB_USER=${POSTGRES_NON_ROOT_USER}
     - DB_POSTGRESDB_PASSWORD=${POSTGRES_NON_ROOT_PASSWORD}
+    - DB_POSTGRESDB_SCHEMA=n8n
     - EXECUTIONS_MODE=queue
     - QUEUE_BULL_REDIS_HOST=redis
     - QUEUE_HEALTH_CHECK_ACTIVE=true
@@ -29,41 +30,43 @@ x-shared: &shared
     - N8N_SMTP_USER=support@keithritherus.my.id
     - N8N_SMTP_SSL=false
     - N8N_SMTP_SENDER=Keith Ritherus <support@n8n.keithritherus.my.id>
+    - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=false
   links:
-    - postgres
+    # - postgres
+    - cloudflared-client
     - redis
   volumes:
     - n8n_storage:/home/node/.n8n
   depends_on:
     redis:
       condition: service_healthy
-    postgres:
-      condition: service_healthy
-    pgvector:
-      condition: service_healthy
+    # postgres:
+    #   condition: service_healthy
+    # pgvector:
+    #   condition: service_healthy
     # qdrant:
     #   condition: service_started
 
 services:
-  postgres:
-    image: postgres:16
-    restart: always
-    environment:
-      - POSTGRES_USER
-      - POSTGRES_PASSWORD
-      - POSTGRES_DB
-      - POSTGRES_NON_ROOT_USER
-      - POSTGRES_NON_ROOT_PASSWORD
-    ports:
-      - 5432:5432
-    volumes:
-      - db_storage:/var/lib/postgresql/data
-      - ./init-data.sh:/docker-entrypoint-initdb.d/init-data.sh
-    healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -h localhost -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
-      interval: 5s
-      timeout: 5s
-      retries: 10
+  # postgres:
+  #   image: postgres:16
+  #   restart: always
+  #   environment:
+  #     - POSTGRES_USER
+  #     - POSTGRES_PASSWORD
+  #     - POSTGRES_DB
+  #     - POSTGRES_NON_ROOT_USER
+  #     - POSTGRES_NON_ROOT_PASSWORD
+  #   ports:
+  #     - 5432:5432
+  #   volumes:
+  #     - db_storage:/var/lib/postgresql/data
+  #     - ./init-data.sh:/docker-entrypoint-initdb.d/init-data.sh
+  #   healthcheck:
+  #     test: ['CMD-SHELL', 'pg_isready -h localhost -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
+  #     interval: 5s
+  #     timeout: 5s
+  #     retries: 10
 
   redis:
     image: redis:6-alpine
@@ -76,22 +79,22 @@ services:
       timeout: 5s
       retries: 10
   
-  pgvector:
-    image: ankane/pgvector
-    restart: always
-    environment:
-      - POSTGRES_USER
-      - POSTGRES_PASSWORD
-      - POSTGRES_DB=openaivector
-    ports:
-      - "5433:5432"
-    volumes:
-      - pgvector-storage:/var/lib/postgresql/data
-    healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -h localhost -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
-      interval: 5s
-      timeout: 5s
-      retries: 10
+  # pgvector:
+  #   image: ankane/pgvector
+  #   restart: always
+  #   environment:
+  #     - POSTGRES_USER
+  #     - POSTGRES_PASSWORD
+  #     - POSTGRES_DB=openaivector
+  #   ports:
+  #     - "5433:5432"
+  #   volumes:
+  #     - pgvector-storage:/var/lib/postgresql/data
+  #   healthcheck:
+  #     test: ['CMD-SHELL', 'pg_isready -h localhost -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
+  #     interval: 5s
+  #     timeout: 5s
+  #     retries: 10
   # qdrant:
   #   image: qdrant/qdrant
   #   container_name: qdrant
@@ -116,12 +119,22 @@ services:
   n8n-worker:
     <<: *shared
     command: worker
-    depends_on:
+    depends_on: 
       - n8n
 
-  cloudflared:
+  cloudflared-client:
     image: cloudflare/cloudflared:latest
-    container_name: cloudflared
+    container_name: cloudflared-client
+    restart: unless-stopped
+    command: >
+      access tcp --hostname supabase-db.keithritherus.my.id --listener 0.0.0.0:5432
+    expose:
+    - "5432"
+
+
+  cloudflared-server:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared-server
     restart: unless-stopped
     command: tunnel --no-autoupdate run --token eyJhIjoiMzgyYmI5YTkxYjc3MTljMTk3ZWVmYzNlNzg1NmExZTQiLCJ0IjoiOTNhZWUzNTUtN2MwNy00NzVmLWJlMTItOTEwMzY1ZDg2NjlhIiwicyI6Ik1tSTFaVEkxWVRRdE1EZ3dZaTAwWTJRNUxXRTJPRGt0TXpGbFlqWTVNV00wWmpGaSJ9
 
