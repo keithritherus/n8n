@@ -1,14 +1,17 @@
 import axios from "axios";
 import nodemailer from "nodemailer";
+// import dotenv from "dotenv";
+
+// dotenv.config();
 
 const fullRepo = process.env.GITHUB_REPOSITORY || "unknown/unknown";
 const repoName = fullRepo.split("/")[1];
+const codespaceUrl = process.env.GH_CODESPACE_URL
 
-console.log({EMAIL_USER:process.env.EMAIL_USER,EMAIL_PASS:process.env.EMAIL_PASS})
 async function checkCodespace() {
   try {
-    const res = await axios.get(process.env.GH_CODESPACE_URL, {
-      maxRedirects: 2,
+    const res = await axios.get(codespaceUrl, {
+      maxRedirects: 5,
       headers: {
         Cookie: process.env.GH_COOKIE
       }
@@ -16,7 +19,14 @@ async function checkCodespace() {
 
     const body = res.data;
 
-    const hasCodespace = new RegExp(`${repoName} \[Codespaces: orange couscous\]`);
+    const label = new URL(codespaceUrl).pathname
+      .split("/").pop()            
+      .replace(/-[a-z0-9]+$/i, "") 
+      .replace(/-/g, " ");
+
+    console.log("🔍 Checking Codespace:", label);
+
+    const hasCodespace = new RegExp(`${repoName} \\[Codespaces: ${label}\\]`);
     const hasVSCode = /vscode/;
 
     if (hasCodespace.test(body) && hasVSCode.test(body)) {
