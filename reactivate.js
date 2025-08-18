@@ -26,7 +26,7 @@ async function checkCodespace() {
 
     console.log("🔍 Checking Codespace:", label);
 
-    const hasCodespace = new RegExp(`${repoName} \\[Codespaces: ${label}\\]`);
+    const hasCodespace = new RegExp(repoName);
     const hasVSCode = /vscode/;
 
     if (hasCodespace.test(body) && hasVSCode.test(body)) {
